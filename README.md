@@ -18,8 +18,9 @@ Super lightweight recon script that just uses sublist3r to search for subdomains
 Inspired by lazyrecon since that is a little too traffic heavy for me.
 
 # Usage
-`./recon.sh domain.com`
+`./recon.sh -d domain.com [-e] [sub.domain.com, ...]`
 
 # To do
 * add more search tools to grab more subdomains passively
 * CNAME records?
+* fix the weird space after $n
