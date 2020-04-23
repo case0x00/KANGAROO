@@ -24,9 +24,16 @@ echo "${reset}"
 
 recon(){
     echo -ne "Listing subdomains using Sublist3r...\n"
-    python3 ~/tools/Sublist3r/sublist3r.py -d $1 -v -o ./$1/subdomains.txt > /dev/null
+    python3 ~/tools/Sublist3r/sublist3r.py -d $1 -v -o ./$1/subdomains2.txt > /dev/null
     echo -e "\rListing subdomains using Sublist3r... Done!"
 
+}
+
+exclusion(){
+    echo "Excluding domains..."
+    printf "%s\n" "${exluded[*]}" > ./$1/excluded.txt
+    grep -vFf ./$1/subdomains2.txt ./$1/excluded.txt > ./$1/subdomains.txt
+    rm ./$1/subdomains2.txt
 }
 
 check-ok(){
