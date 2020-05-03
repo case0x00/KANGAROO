@@ -24,3 +24,4 @@ Inspired by lazyrecon since that is a little too traffic heavy for me.
 * add more search tools to grab more subdomains passively
 * CNAME records?
 * fix the weird space after $n
+* add aquatone support
