@@ -69,7 +69,9 @@ check-ok(){
         ((i=i+1))
     done < ./$domain/subdomains.txt
 
-    sed '/^200/ !d' < ./$domain/list.txt > ./$domain/domain-status.txt
+    sed '/^200/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
+    sed '/^403/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
+    cat ./$domain/domain-status.txt | sort -u > ./$domain/responsive.txt
     rm ./$domain/list.txt
 
     echo -ne "Checking status of listed subdomains... Done!\n"
