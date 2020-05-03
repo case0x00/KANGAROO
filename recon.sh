@@ -79,6 +79,14 @@ check-ok(){
     echo -ne "Total $n subdomains after check. Reduced by $((n - m))\n"
 }
 
+
+aquatone(){
+    echo -ne "Starting aquatone...\n"
+    awk '{$1=$2=$3=$4=""; print $0}' ./$domain/responsive > ./$domain/aqua-resp.txt
+    cat ./$domain/aqua-resp.txt | aquatone -chrome-path $chromiumPath -out ./$domain/aqua-out -threads 5 -silent
+    rm ./$domain/aqua-resp.txt
+}
+
 main(){
     clear
     logo
@@ -92,6 +100,7 @@ main(){
     
     recon $domain
     check-ok $domain
+    #aquatone $domain
     duration=$SECONDS
     echo "Subdomain reconnaissance completed in: $(($duration / 60)) minutes and $(($duration % 60)) seconds."
     stty sane
