@@ -29,7 +29,6 @@ while getopts ":d:e:" o; do
         d)
             domain=${OPTARG}
             ;;
-
          e)
             set -f
             IFS=","
@@ -41,47 +40,53 @@ done
 shift $((OPTIND - 1))
 
 exclusion(){
-    IFS=$'\n'
-    printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
-    grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
-    mv ./$domain/subdomains2.txt ./$domain/subdomains.txt
-    printf "%s\n" "${excluded[@]}"
-    unset IFS
+	if [ ${#excluded[@]} -eq 0 ]; then
+		echo ":: No subdomain exclusions to apply"
+	else
+		echo -ne ":: Excluding specified domains:\n"
+		IFS=$'\n'
+		printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
+		grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
+		mv ./$domain/subdomains2.txt ./$domain/subdomains.txt
+		printf "%s\n" "${excluded[@]}"
+		unset IFS
+	fi
 }
 
 recon(){
-    echo -ne "Listing subdomains using Sublist3r...\n"
+    echo -ne ":: Listing subdomains using Sublist3r...\n"
     python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt > /dev/null
-    echo -e "\rListing subdomains using Sublist3r... Done!"
-    echo -ne "Excluding specified domains:\n"
+    echo -e "\r:: Listing subdomains using Sublist3r... Done!"
     exclusion
-    echo -e "\rExcluding specified domains... Done!"
+    echo -e "\r:: Excluding specified domains... Done!"
 }
 
 check-ok(){
-    echo -ne "Checking status of listed subdomains...\n"
+    echo -ne ":: Checking status of listed subdomains...\n"
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
 
     while read LINE; do
         curl -L --max-redirs 10 -o /dev/null -m 5 --silent --get --write-out "%{http_code} $LINE\n" "$LINE" >> ./$domain/list.txt
-        printf "Completed: $i/$n\r"
+        printf ":: Completed: $i/$n\r"
         ((i=i+1))
     done < ./$domain/subdomains.txt
 
-    sed '/^200/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
+    sed '/^200/ !d' < ./$domain/list.txt > ./$domain/domain-status.txt
     sed '/^403/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
+	sed '/^500/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
     cat ./$domain/domain-status.txt | sort -u > ./$domain/responsive.txt
     rm ./$domain/list.txt
 
-    echo -ne "Checking status of listed subdomains... Done!\n"
+    echo -ne ":: Checking status of listed subdomains... Done!\n"
     m=$(wc -l < ./$domain/domain-status.txt)
-    echo -ne "Total $n subdomains after check. Reduced by $((n - m))\n"
+    echo -ne ":: Total $n subdomains after check. Reduced by $((n - m))\n"
+	rm ./$domain/domain-status.txt
 }
 
 
 aquatone(){
-    echo -ne "Starting aquatone...\n"
+    echo -ne ":: Starting aquatone...\n"
     awk '{$1=$2=$3=$4=""; print $0}' ./$domain/responsive > ./$domain/aqua-resp.txt
     cat ./$domain/aqua-resp.txt | aquatone -chrome-path $chromiumPath -out ./$domain/aqua-out -threads 5 -silent
     rm ./$domain/aqua-resp.txt
@@ -91,9 +96,9 @@ main(){
     clear
     logo
     echo "@whichtom"
-    echo "Hitting target $domain..."
+    echo ":: Hitting target $domain..."
     if [[ -d "./$domain" ]]; then
-        echo "Target already known, directory already exists"
+        echo ":: Target already known, directory already exists"
     else
         mkdir ./$domain
     fi
@@ -102,7 +107,7 @@ main(){
     check-ok $domain
     #aquatone $domain
     duration=$SECONDS
-    echo "Subdomain reconnaissance completed in: $(($duration / 60)) minutes and $(($duration % 60)) seconds."
+    echo ":: Subdomain reconnaissance completed in: $(($duration / 60)) minutes and $(($duration % 60)) seconds."
     stty sane
     tput sgr0
 }
