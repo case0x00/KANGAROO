@@ -43,7 +43,7 @@ exclusion(){
 	if [ ${#excluded[@]} -eq 0 ]; then
 		echo ":: No subdomain exclusions to apply"
 	else
-		echo -ne ":: Excluding specified domains:\n"
+		echo -ne ":: Excluding specified subdomains:\n"
 		IFS=$'\n'
 		printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
 		grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
@@ -58,7 +58,7 @@ recon(){
     python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt > /dev/null
     echo -e "\r:: Listing subdomains using Sublist3r... Done!"
     exclusion
-    echo -e "\r:: Excluding specified domains... Done!"
+    echo -e "\r:: Excluding specified subdomains... Done!"
 }
 
 check-ok(){
@@ -74,14 +74,14 @@ check-ok(){
 
     sed '/^200/ !d' < ./$domain/list.txt > ./$domain/domain-status.txt
     sed '/^403/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
-	sed '/^500/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
+    sed '/^500/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
     cat ./$domain/domain-status.txt | sort -u > ./$domain/responsive.txt
     rm ./$domain/list.txt
 
     echo -ne ":: Checking status of listed subdomains... Done!\n"
     m=$(wc -l < ./$domain/domain-status.txt)
     echo -ne ":: Total $n subdomains after check. Reduced by $((n - m))\n"
-	rm ./$domain/domain-status.txt
+    rm ./$domain/domain-status.txt
 }
 
 

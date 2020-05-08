@@ -13,7 +13,7 @@
 
 # Kangaroo
 
-Super lightweight recon script that just uses sublist3r to search for subdomains, then sorts only looking for 200 OKs following 301 redirects with a 5 second max timeout for any operation. Makes a new directory with the domain's name in the current working directory.
+Super lightweight recon script that just uses sublist3r to search for subdomains, then sorts only looking for 200, 403, and 500 following 301 redirects with a 5 second max timeout for any operation. Makes a new directory with the domain's name in the current working directory.
 
 Inspired by lazyrecon since that is a little too traffic heavy for me.
 
@@ -23,5 +23,4 @@ Inspired by lazyrecon since that is a little too traffic heavy for me.
 # To do
 * add more search tools to grab more subdomains passively
 * CNAME records?
-* fix the weird space after $n
 * clean up aquatone
