@@ -21,6 +21,7 @@ Inspired by lazyrecon since that is a little too traffic heavy for me.
 `./kangaroo.sh -d domain.com [-e] [sub.domain.com, ...]`
 
 # To do
-* add more search tools to grab more subdomains passively
+* add more search tools to grab more subdomains passively and sort unique
 * CNAME records?
 * clean up aquatone
+* scope assignment (e.g. scope to verizonmedia would put all subdomains into a verizonmedia directory, '[-s] [scope]')
