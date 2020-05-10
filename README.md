@@ -25,3 +25,4 @@ Inspired by lazyrecon since that is a little too traffic heavy for me.
 * dirsearch
 * CNAME records?
 * scope assignment (e.g. scope to verizonmedia would put all subdomains into a verizonmedia directory, '[-s] [scope]')
+* verbosity flag for sublist3r

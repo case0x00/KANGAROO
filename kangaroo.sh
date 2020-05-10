@@ -3,12 +3,12 @@
 
 # pretty colors
 red=`tput setaf 1`
-green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
 
 # configuration
 chromePath=/usr/bin/google-chrome
+identifier=
 
 SECONDS=0
 
@@ -59,17 +59,17 @@ set-scope(){
 
 exclusion(){
     # check if the array excluded is empty
-	if [ ${#excluded[@]} -eq 0 ]; then
-		echo -ne "\n${red}::${reset} No subdomain exclusions to apply\n"
-	else
-		echo -ne "\n${red}::${reset} Excluding specified subdomains:\n"
-		IFS=$'\n'
-		printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
-		grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
-		mv ./$domain/subdomains2.txt ./$domain/subdomains.txt
-		printf "%s\n" "${excluded[@]}"
-		unset IFS
-	fi
+    if [ ${#excluded[@]} -eq 0 ]; then
+        echo -ne "\n${red}::${reset} No subdomain exclusions to apply\n"
+    else
+        echo -ne "\n${red}::${reset} Excluding specified subdomains:\n"
+        IFS=$'\n'
+        printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
+        grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
+        mv ./$domain/subdomains2.txt ./$domain/subdomains.txt
+        printf "%s\n" "${excluded[@]}"
+        unset IFS
+    fi
 }
 
 recon(){
@@ -86,8 +86,9 @@ check-ok(){
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
     
+    echo -ne "\r${red}::${reset} Checking status of listed subdomains:\n"
     while read LINE; do
-        curl -L --max-redirs 10 -o /dev/null -m 5 --silent --get --write-out "%{http_code} $LINE\n" "$LINE" >> ./$domain/list.txt
+        curl -L --max-redirs 10 -H "X-Bug-Bounty:HackerOne-$identifier" -o /dev/null -m 5 --silent --get --write-out "%{http_code} $LINE\n" "$LINE" >> ./$domain/list.txt
         progressbar ${i} ${n}
         ((i=i+1))
     done < ./$domain/subdomains.txt
@@ -115,12 +116,12 @@ aqua(){
 
 progressbar(){
     # nice progress bar
-    let progress=(${1}*100/${2}*100)/100
-    let done=(${progress}*4)/10
-    let left=40-$done
+    let progress="(${1}*100/${2}*100)/100"
+    let done="(${progress}*6)/10"
+    let left=60-$done
     done=$(printf "%${done}s")
     left=$(printf "%${left}s")
-    printf "\r${red}::${reset} Checking status of listed subdomains: [${done// /${red}=}>${reset}${left// / }] $1/$2"
+    printf "\r${red}::${reset} [${done// /${red}=}>${reset}${left// / }] $1/$2"
 
 }
 
@@ -133,6 +134,13 @@ main(){
         echo "${red}::${reset} Target already known, directory already exists"
     else
         mkdir ./$domain
+    fi
+
+    if [[ -z $identifier ]]; then
+        echo "${red}::${reset} identifier for status checker is blank. Set in the config"
+        exit 1
+    else
+        echo "${red}::${reset} Identifier set as: X-Bug-Bounty:HackerOne-$identifier"
     fi
     
     recon $domain
