@@ -1,10 +1,13 @@
 #!/bin/bash
 # based on https://github.com/nahamsec/lazyrecon
 
+# pretty colors
 red=`tput setaf 1`
 green=`tput setaf 2`
 yellow=`tput setaf 3`
 reset=`tput sgr0`
+
+# configuration
 chromePath=/usr/bin/google-chrome
 
 SECONDS=0
@@ -43,11 +46,23 @@ while getopts ":d:e:" o; do
 done
 shift $((OPTIND - 1))
 
+
+set-scope(){
+    # check if scope is unset or is an empty string
+    # not working yet
+    if [ -z $scope ]; then
+        echo -ne "\n${red}::${reset} No scope specified, saving report folder to current working directory\n"
+    else
+        echo -ne "\n${red}::${reset} Scope set to: $scope\n"
+    fi
+}
+
 exclusion(){
+    # check if the array excluded is empty
 	if [ ${#excluded[@]} -eq 0 ]; then
-		echo "${red}::${reset} No subdomain exclusions to apply"
+		echo -ne "\n${red}::${reset} No subdomain exclusions to apply\n"
 	else
-		echo -ne "${red}::${reset} Excluding specified subdomains:\n"
+		echo -ne "\n${red}::${reset} Excluding specified subdomains:\n"
 		IFS=$'\n'
 		printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
 		grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
@@ -58,41 +73,55 @@ exclusion(){
 }
 
 recon(){
-    echo -ne "${red}::${reset} Listing subdomains using Sublist3r...\n"
+    # runs sublist3r and file exclusion (if selected)
+    printf "${red}::${reset} Listing subdomains using Sublist3r...\n"
     python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt > /dev/null
-    echo -e "\r${red}::${reset} Listing subdomains using Sublist3r... Done!"
+    printf "\r${red}::${reset} Listing subdomains using Sublist3r... Done!"
     exclusion
     echo -e "\r${red}::${reset} Excluding specified subdomains... Done!"
 }
 
 check-ok(){
-    echo -ne "${red}::${reset} Checking status of listed subdomains...\n"
+    # checks for 200, 403, and 500. others arent as interesting most of the time
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
-
+    
     while read LINE; do
         curl -L --max-redirs 10 -o /dev/null -m 5 --silent --get --write-out "%{http_code} $LINE\n" "$LINE" >> ./$domain/list.txt
-        printf "${red}::${reset} Completed: $i/$n\r"
+        progressbar ${i} ${n}
         ((i=i+1))
     done < ./$domain/subdomains.txt
 
+    # this could be done way better
     sed '/^200/ !d' < ./$domain/list.txt > ./$domain/domain-status.txt
     sed '/^403/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
     sed '/^500/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
     cat ./$domain/domain-status.txt | sort -u > ./$domain/responsive.txt
     rm ./$domain/list.txt
 
-    echo -ne "${red}::${reset} Checking status of listed subdomains... Done!\n"
+    printf "\n${red}::${reset} Done!\n"
     m=$(wc -l < ./$domain/domain-status.txt)
     echo -ne "${red}::${reset} Total $n subdomains after check. Reduced by $((n - m))\n"
     rm ./$domain/domain-status.txt
 }
 
 aqua(){
+    # aquatone for nice visualization
     echo -ne "${red}::${reset} Starting aquatone...\n"
     sed 's/^....//' < ./$domain/responsive.txt > ./$domain/aqua-resp.txt
     cat ./$domain/aqua-resp.txt | aquatone -chrome-path $chromePath -out ./$domain/aqua-out -threads 5 -silent
     rm ./$domain/aqua-resp.txt
+}
+
+progressbar(){
+    # nice progress bar
+    let progress=(${1}*100/${2}*100)/100
+    let done=(${progress}*4)/10
+    let left=40-$done
+    done=$(printf "%${done}s")
+    left=$(printf "%${left}s")
+    printf "\r${red}::${reset} Checking status of listed subdomains: [${done// /${red}=}>${reset}${left// / }] $1/$2"
+
 }
 
 main(){
