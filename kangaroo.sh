@@ -8,7 +8,6 @@ reset=`tput sgr0`
 
 # configuration
 chromePath=/usr/bin/google-chrome
-identifier=
 
 SECONDS=0
 
@@ -23,7 +22,11 @@ logo(){
   \ \  \\ \  \ \  \ \  \ \  \\ \  \ \  \|\  \ \  \ \  \ \  \\  \\ \  \\\  \ \  \\\  \
    \ \__\\ \__\ \__\ \__\ \__\\ \__\ \_______\ \__\ \__\ \__\\ _\\ \_______\ \_______\
     \|__| \|__|\|__|\|__|\|__| \|__|\|_______|\|__|\|__|\|__|\|__|\|_______|\|_______|
-
+EOF
+echo "${reset}"
+    echo "${red}"
+    cat << "EOF"
+                                    @whichtom
 EOF
 echo "${reset}"
 }
@@ -82,36 +85,25 @@ recon(){
 }
 
 check-ok(){
-    # checks for 200, 403, and 500. others arent as interesting most of the time
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
     
     echo -ne "\r${red}::${reset} Checking status of listed subdomains:\n"
     while read LINE; do
-        curl -L --max-redirs 10 -H "X-Bug-Bounty:HackerOne-$identifier" -o /dev/null -m 5 --silent --get --write-out "%{http_code} $LINE\n" "$LINE" >> ./$domain/list.txt
+        echo "$LINE" | httprobe -t 5000 >> ./$domain/responsive.txt
         progressbar ${i} ${n}
         ((i=i+1))
     done < ./$domain/subdomains.txt
 
-    # this could be done way better
-    sed '/^200/ !d' < ./$domain/list.txt > ./$domain/domain-status.txt
-    sed '/^403/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
-    sed '/^500/ !d' < ./$domain/list.txt >> ./$domain/domain-status.txt
-    cat ./$domain/domain-status.txt | sort -u > ./$domain/responsive.txt
-    rm ./$domain/list.txt
-
     printf "\n${red}::${reset} Done!\n"
-    m=$(wc -l < ./$domain/domain-status.txt)
+    m=$(wc -l < ./$domain/responsive.txt)
     echo -ne "${red}::${reset} Total $n subdomains after check. Reduced by $((n - m))\n"
-    rm ./$domain/domain-status.txt
 }
 
 aqua(){
     # aquatone for nice visualization
     echo -ne "${red}::${reset} Starting aquatone...\n"
-    sed 's/^....//' < ./$domain/responsive.txt > ./$domain/aqua-resp.txt
-    cat ./$domain/aqua-resp.txt | aquatone -chrome-path $chromePath -out ./$domain/aqua-out -threads 5 -silent
-    rm ./$domain/aqua-resp.txt
+    cat ./$domain/responsive.txt | aquatone -chrome-path $chromePath -out ./$domain/aqua-out -threads 5 -silent
 }
 
 progressbar(){
@@ -128,7 +120,7 @@ progressbar(){
 main(){
     clear
     logo
-    echo "${red}@whichtom${reset}"
+
     echo "${red}::${reset} Hitting target $domain..."
     if [[ -d "./$domain" ]]; then
         echo "${red}::${reset} Target already known, directory already exists"
@@ -136,13 +128,6 @@ main(){
         mkdir ./$domain
     fi
 
-    if [[ -z $identifier ]]; then
-        echo "${red}::${reset} identifier for status checker is blank. Set in the config"
-        exit 1
-    else
-        echo "${red}::${reset} Identifier set as: X-Bug-Bounty:HackerOne-$identifier"
-    fi
-    
     recon $domain
     check-ok $domain
     aqua $domain
