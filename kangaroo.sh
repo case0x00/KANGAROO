@@ -90,11 +90,11 @@ check-ok(){
     n=$(wc -l < ./$domain/subdomains.txt)
     
     echo -ne "\r${red}::${reset} Checking status of listed subdomains:\n"
-    while read LINE; do
-        echo "$LINE" | httprobe -t 3000 >> ./$domain/responsive.txt
-        progress-bar ${i} ${n}
-        ((i=i+1))
-    done < ./$domain/subdomains.txt
+    cat ./$domain/subdomains.txt | httprove -t 3000 >> ./$domain/responsive-tmp.txt
+    # check that this works ...
+    cat ./$domain/responsive-tmp.txt | sed 's/\http\:\/\///g' | sed 's/\https\:\/\///g' | sort -u >> ./$domain/responsive.txt
+    rm ./$domain/responsive-tmp.txt 
+
 
     printf "\n${red}::${reset} Done!\n"
     m=$(wc -l < ./$domain/responsive.txt)
@@ -135,11 +135,11 @@ main(){
         mkdir ./$domain
     fi
 
-#    recon $domain
-#	check-time "Sublist3r"
+    recon $domain
+	check-time "Sublist3r"
 
-#    check-ok $domain
-#	check-time "Httprobe"
+    check-ok $domain
+	check-time "Httprobe"
 
     if [[ $doaqua == "true" ]]; then
         echo -ne "${red}::${reset} Starting aquatone...\n"
