@@ -80,8 +80,8 @@ recon(){
     printf "${red}::${reset} Listing subdomains using Sublist3r...\n"
     python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt > /dev/null
     printf "\r${red}::${reset} Listing subdomains using Sublist3r... Done!"
+    printf "${red}::${reset} $(wc -l < ./$domain/subdomains.txt) subdomains listed." 
     exclusion
-    echo -e "\r${red}::${reset} Excluding specified subdomains... Done!"
 }
 
 check-ok(){
@@ -90,7 +90,7 @@ check-ok(){
     n=$(wc -l < ./$domain/subdomains.txt)
     
     echo -ne "\r${red}::${reset} Checking status of listed subdomains:\n"
-    cat ./$domain/subdomains.txt | httprove -t 3000 >> ./$domain/responsive-tmp.txt
+    cat ./$domain/subdomains.txt | httprobe -t 3000 >> ./$domain/responsive-tmp.txt
     # check that this works ...
     cat ./$domain/responsive-tmp.txt | sed 's/\http\:\/\///g' | sed 's/\https\:\/\///g' | sort -u >> ./$domain/responsive.txt
     rm ./$domain/responsive-tmp.txt 
@@ -124,7 +124,7 @@ check-time(){
 }
 
 main(){
-#    clear
+    clear
     logo
     echo "${red}@whichtom${reset}"
 
