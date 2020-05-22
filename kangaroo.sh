@@ -78,9 +78,9 @@ exclusion(){
 recon(){
     # runs sublist3r and file exclusion (if selected)
     printf "${red}::${reset} Listing subdomains using Sublist3r...\n"
-    python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt > /dev/null
-    printf "\r${red}::${reset} Listing subdomains using Sublist3r... Done!"
-    printf "${red}::${reset} $(wc -l < ./$domain/subdomains.txt) subdomains listed." 
+    python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt #> /dev/null
+    printf "\r${red}::${reset} Done!\n"
+    printf "${red}::${reset} $(wc -l < ./$domain/subdomains.txt) subdomains listed."
     exclusion
 }
 
@@ -89,16 +89,14 @@ check-ok(){
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
     
-    echo -ne "\r${red}::${reset} Checking status of listed subdomains:\n"
+    echo -ne "\r${red}::${reset} Checking status of listed subdomains..."
     cat ./$domain/subdomains.txt | httprobe -t 3000 >> ./$domain/responsive-tmp.txt
-    # check that this works ...
     cat ./$domain/responsive-tmp.txt | sed 's/\http\:\/\///g' | sed 's/\https\:\/\///g' | sort -u >> ./$domain/responsive.txt
-    rm ./$domain/responsive-tmp.txt 
-
+    rm ./$domain/responsive-tmp.txt
 
     printf "\n${red}::${reset} Done!\n"
     m=$(wc -l < ./$domain/responsive.txt)
-    echo -ne "${red}::${reset} Total $m subdomains after check. Reduced by $((n - m))\n"
+    echo -ne "${red}::${reset} Total $m subdomains after check. Reduced by $((n - m)).\n"
 }
 
 aqua(){
@@ -120,7 +118,7 @@ progress-bar(){
 check-time(){
     taskname=$1
     duration=$SECONDS
-    echo "${red}::${reset} $taskname completed in: $(($duration / 60)) minutes and $(($duration % 60)) seconds."
+    echo "${red}::${reset} $taskname completed after: $(($duration/ 60)) minutes and $(($duration% 60)) seconds."
 }
 
 main(){
@@ -136,10 +134,10 @@ main(){
     fi
 
     recon $domain
-	check-time "Sublist3r"
+    check-time "Sublist3r"
 
     check-ok $domain
-	check-time "Httprobe"
+    check-time "Httprobe"
 
     if [[ $doaqua == "true" ]]; then
         echo -ne "${red}::${reset} Starting aquatone...\n"
