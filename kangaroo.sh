@@ -2,9 +2,10 @@
 # based on https://github.com/nahamsec/lazyrecon
 
 # pretty colors
-red=`tput setaf 1`
-yellow=`tput setaf 3`
-reset=`tput sgr0`
+RED=$(printf '\033[31m')
+BLUE=$(printf '\033[34m')
+YELLOW=$(printf '\033[33m')
+RESET=$(printf '\033[m')
 
 # configuration
 chromePath=/usr/bin/google-chrome
@@ -36,7 +37,7 @@ done
 shift $((OPTIND - 1))
 
 logo(){
-    echo "${yellow}"
+    echo "${YELLOW}"
     cat << "EOF"
  ___  __    ________  ________   ________  ________  ________  ________  ________
 |\  \|\  \ |\   __  \|\   ___  \|\   ____\|\   __  \|\   __  \|\   __  \|\   __  \
@@ -47,25 +48,25 @@ logo(){
     \|__| \|__|\|__|\|__|\|__| \|__|\|_______|\|__|\|__|\|__|\|__|\|_______|\|_______|
 
 EOF
-echo "${reset}"
+echo "${RESET}"
 }
 
 set-scope(){
     # check if scope is unset or is an empty string
     # not working yet
     if [ -z $scope ]; then
-        echo -ne "\n${red}::${reset} No scope specified, saving report folder to current working directory\n"
+        echo -ne "\n${RED}::${RESET} No scope specified, saving report folder to current working directory\n"
     else
-        echo -ne "\n${red}::${reset} Scope set to: $scope\n"
+        echo -ne "\n${RED}::${RESET} Scope set to: $scope\n"
     fi
 }
 
 exclusion(){
     # excludes subdomains from check-ok
     if [ ${#excluded[@]} -eq 0 ]; then
-        echo -ne "\n${red}::${reset} No subdomain exclusions to apply\n"
+        echo -ne "\n${RED}::${RESET} No subdomain exclusions to apply\n"
     else
-        echo -ne "\n${red}::${reset} Excluding specified subdomains:\n"
+        echo -ne "\n${RED}::${RESET} Excluding specified subdomains:\n"
         IFS=$'\n'
         printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
         grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
@@ -77,10 +78,10 @@ exclusion(){
 
 recon(){
     # runs sublist3r and file exclusion (if selected)
-    printf "${red}::${reset} Listing subdomains using Sublist3r...\n"
+    printf "${RED}::${RESET} Listing subdomains using Sublist3r...\n"
     python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt #> /dev/null
-    printf "\r${red}::${reset} Done!\n"
-    printf "${red}::${reset} $(wc -l < ./$domain/subdomains.txt) subdomains listed."
+    printf "\r${RED}::${RESET} Done!\n"
+    printf "${RED}::${RESET} $(wc -l < ./$domain/subdomains.txt) subdomains listed."
     exclusion
 }
 
@@ -89,14 +90,14 @@ check-ok(){
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
     
-    echo -ne "\r${red}::${reset} Checking status of listed subdomains..."
+    echo -ne "\r${RED}::${RESET} Checking status of listed subdomains..."
     cat ./$domain/subdomains.txt | httprobe -t 3000 >> ./$domain/responsive-tmp.txt
     cat ./$domain/responsive-tmp.txt | sed 's/\http\:\/\///g' | sed 's/\https\:\/\///g' | sort -u >> ./$domain/responsive.txt
     rm ./$domain/responsive-tmp.txt
 
-    printf "\n${red}::${reset} Done!\n"
+    printf "\n${RED}::${RESET} Done!\n"
     m=$(wc -l < ./$domain/responsive.txt)
-    echo -ne "${red}::${reset} Total $m subdomains after check. Reduced by $((n - m)).\n"
+    echo -ne "${RED}::${RESET} Total $m subdomains after check. Reduced by $((n - m)).\n"
 }
 
 aqua(){
@@ -111,24 +112,24 @@ progress-bar(){
     let left=60-$done
     done=$(printf "%${done}s")
     left=$(printf "%${left}s")
-    printf "\r${red}::${reset} [${done// /${red}=}>${reset}${left// / }] $1/$2"
+    printf "\r${RED}::${RESET} [${done// /${RED}=}>${RESET}${left// / }] $1/$2"
 
 }
 
 check-time(){
     taskname=$1
     duration=$SECONDS
-    echo "${red}::${reset} $taskname completed after: $(($duration/ 60)) minutes and $(($duration% 60)) seconds."
+    echo "${RED}::${RESET} $taskname completed after: $(($duration/ 60)) minutes and $(($duration% 60)) seconds."
 }
 
 main(){
     clear
     logo
-    echo "${red}@whichtom${reset}"
+    echo "${RED}@whichtom${RESET}"
 
-    echo "${red}::${reset} Hitting target $domain..."
+    echo "${RED}::${RESET} Hitting target $domain..."
     if [[ -d "./$domain" ]]; then
-        echo "${red}::${reset} Target already known, directory already exists"
+        echo "${RED}::${RESET} Target already known, directory already exists"
     else
         mkdir ./$domain
     fi
@@ -140,11 +141,11 @@ main(){
     check-time "Httprobe"
 
     if [[ $doaqua == "true" ]]; then
-        echo -ne "${red}::${reset} Starting aquatone...\n"
+        echo -ne "${RED}::${RESET} Starting aquatone...\n"
         aqua $domain
         check-time "Aquatone"
     else
-        echo -ne "${red}::${reset} Aquatone not being used\n"
+        echo -ne "${RED}::${RESET} Aquatone not being used\n"
     fi
 
     check-time "Total subdomain reconnaissance"
