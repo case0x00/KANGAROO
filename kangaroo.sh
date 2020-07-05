@@ -15,7 +15,7 @@ SECONDS=0
 doaqua=
 domain=
 
-while getopts ":d:e:a" flag; do
+while getopts ":d:e:s" flag; do
     case "${flag}" in
         d)
             domain=${OPTARG}
@@ -27,10 +27,7 @@ while getopts ":d:e:a" flag; do
             unset IFS
             ;;
         s)
-            scope=${OPTARG} # ikinda need to append '/' to the end so it doesnt fuck up comms if its null
-            ;;
-        a)
-            doaqua="true"
+            screenshot=${OPTARG}
             ;;
     esac
 done
@@ -51,15 +48,15 @@ EOF
 echo "${RESET}"
 }
 
-set-scope(){
-    # check if scope is unset or is an empty string
-    # not working yet
-    if [ -z $scope ]; then
-        echo -ne "\n${RED}::${RESET} No scope specified, saving report folder to current working directory\n"
-    else
-        echo -ne "\n${RED}::${RESET} Scope set to: $scope\n"
-    fi
-}
+# to do: scope
+#set-scope(){
+#    # check if scope is unset or is an empty string
+#    if [ -z $scope ]; then
+#        echo -ne "\n${RED}::${RESET} No scope specified, saving report folder to current working directory\n"
+#    else
+#        echo -ne "\n${RED}::${RESET} Scope set to: $scope\n"
+#    fi
+#}
 
 exclusion(){
     # excludes subdomains from check-ok
@@ -105,6 +102,13 @@ aqua(){
     cat ./$domain/responsive.txt | aquatone -chrome-path $chromePath -out ./$domain/aqua-out -threads 5 -silent
 }
 
+eyew(){
+    # https://tools.kali.org/information-gathering/eyewitness
+    # must be run as root
+    eyewitness -f $1 --headless -d ./$domain --no-prompt --threads 5
+}
+
+
 progress-bar(){
     # nice progress bar
     let progress="(${1}*100/${2}*100)/100"
@@ -125,11 +129,11 @@ check-time(){
 main(){
     clear
     logo
-    echo "${RED}@whichtom${RESET}"
+    echo "${RED}built with <3 by @onlycase_${RESET}"
 
     echo "${RED}::${RESET} Hitting target $domain..."
     if [[ -d "./$domain" ]]; then
-        echo "${RED}::${RESET} Target already known, directory already exists"
+        echo "${RED}::${RESET} Target already known, directory already exists."
     else
         mkdir ./$domain
     fi
@@ -140,12 +144,17 @@ main(){
     check-ok $domain
     check-time "Httprobe"
 
-    if [[ $doaqua == "true" ]]; then
+    if [[ $screenshot == "eyewitness" ]]; then
+        echo -ne "${RED}::${RESET} Starting EyeWitness...\n"
+        eyew ./$domain/responsive.txt $domain
+        check-time "EyeWitness"
+
+    elif [[ $screenshot == "aquatone" ]]; then
         echo -ne "${RED}::${RESET} Starting aquatone...\n"
         aqua $domain
         check-time "Aquatone"
     else
-        echo -ne "${RED}::${RESET} Aquatone not being used\n"
+        echo -ne "${RED}::${RESET} Screenshot tool not specified.\n"
     fi
 
     check-time "Total subdomain reconnaissance"

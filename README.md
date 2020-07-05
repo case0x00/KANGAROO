@@ -13,12 +13,12 @@
 
 # Kangaroo
 
-Lightweight recon script that uses sublist3r to search for subdomains with httprobe checking for status, performing aquatone for visualization. Makes a new directory with the domain name in the current working directory.
+Its a recon script. Uses sublist3r to search for subdomains with httprobe checking for status, performing aquatone/eyewitness for visualization. Makes a new directory with the domain name in the current working directory.
 
 Inspired by lazyrecon since that is a little too traffic heavy for me.
 
 # Usage
-`./kangaroo.sh -d domain.com [-e] [sub.domain.com, ...]`
+`./kangaroo.sh -d domain.com [-s] [aquatone/eyewitness] [-e] [sub.domain.com, ...]`
 
 # To do
 * add more search tools to grab more subdomains
