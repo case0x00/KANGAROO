@@ -9,29 +9,32 @@ RESET=$(printf '\033[m')
 
 # configuration
 chromePath=/usr/bin/google-chrome
+sublist3rPath=/opt/Sublist3r
 
 SECONDS=0
 
 doaqua=
 domain=
 
-while getopts ":d:e:s" flag; do
+while getopts ":d:s:e" flag; do
     case "${flag}" in
         d)
             domain=${OPTARG}
             ;;
-         e)
+        s)
+            screenshot=${OPTARG}
+            ;;
+
+        e)
             set -f
             IFS=","
             excluded+=($OPTARG)
             unset IFS
             ;;
-        s)
-            screenshot=${OPTARG}
-            ;;
     esac
 done
 shift $((OPTIND - 1))
+
 
 logo(){
     echo "${YELLOW}"
@@ -76,7 +79,7 @@ exclusion(){
 recon(){
     # runs sublist3r and file exclusion (if selected)
     printf "${RED}::${RESET} Listing subdomains using Sublist3r...\n"
-    python3 ~/tools/Sublist3r/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt #> /dev/null
+    python3 $sublist3rPath/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt #> /dev/null
     printf "\r${RED}::${RESET} Done!\n"
     printf "${RED}::${RESET} $(wc -l < ./$domain/subdomains.txt) subdomains listed."
     exclusion
@@ -129,7 +132,7 @@ check-time(){
 main(){
     clear
     logo
-    echo "${RED}built with <3 by @onlycase_${RESET}"
+    echo "${RED}built with <3 by case${RESET}"
 
     echo "${RED}::${RESET} Hitting target $domain..."
     if [[ -d "./$domain" ]]; then
@@ -161,5 +164,4 @@ main(){
     stty sane
     tput sgr0
 }
-
-main $domain
+main $domain 
