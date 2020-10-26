@@ -6,6 +6,8 @@ RED=$(printf '\033[31m')
 BLUE=$(printf '\033[34m')
 YELLOW=$(printf '\033[33m')
 RESET=$(printf '\033[m')
+GREEN=$(printf '\033[92m')
+
 
 # configuration
 chromePath=/usr/bin/google-chrome
@@ -64,9 +66,9 @@ echo "${RESET}"
 exclusion(){
     # excludes subdomains from check-ok
     if [ ${#excluded[@]} -eq 0 ]; then
-        echo -ne "\n${RED}::${RESET} No subdomain exclusions to apply\n"
+        echo -ne "\n${GREEN}[-] no subdomain exclusions to apply${RESET}\n"
     else
-        echo -ne "\n${RED}::${RESET} Excluding specified subdomains:\n"
+        echo -ne "\n${GREEN}[+] excluding specified subdomains:${RESET}\n"
         IFS=$'\n'
         printf "%s\n" "${excluded[*]}" > ./$domain/excluded.txt
         grep -vFf ./$domain/excluded.txt ./$domain/subdomains.txt > ./$domain/subdomains2.txt
@@ -78,10 +80,11 @@ exclusion(){
 
 recon(){
     # runs sublist3r and file exclusion (if selected)
-    printf "${RED}::${RESET} Listing subdomains using Sublist3r...\n"
+    printf "${GREEN}[+] listing subdomains using Sublist3r...${RESET}\n"
     python3 $sublist3rPath/sublist3r.py -d $domain -v -o ./$domain/subdomains.txt #> /dev/null
-    printf "\r${RED}::${RESET} Done!\n"
-    printf "${RED}::${RESET} $(wc -l < ./$domain/subdomains.txt) subdomains listed."
+	echo -ne "\n"
+    printf "\r${GREEN}[+] Done!${RESET}\n"
+    printf "${GREEN}[+] $(wc -l < ./$domain/subdomains.txt) subdomains listed.${RESET}"
     exclusion
 }
 
@@ -90,14 +93,14 @@ check-ok(){
     i=1
     n=$(wc -l < ./$domain/subdomains.txt)
     
-    echo -ne "\r${RED}::${RESET} Checking status of listed subdomains..."
+    echo -ne "\r${GREEN}[+] checking status of listed subdomains...${RESET}"
     cat ./$domain/subdomains.txt | httprobe -t 3000 >> ./$domain/responsive-tmp.txt
     cat ./$domain/responsive-tmp.txt | sed 's/\http\:\/\///g' | sed 's/\https\:\/\///g' | sort -u >> ./$domain/responsive.txt
     rm ./$domain/responsive-tmp.txt
 
-    printf "\n${RED}::${RESET} Done!\n"
+    printf "\n${GREEN}[+] done!${RESET}\n"
     m=$(wc -l < ./$domain/responsive.txt)
-    echo -ne "${RED}::${RESET} Total $m subdomains after check. Reduced by $((n - m)).\n"
+    echo -ne "${GREEN}[+] total $m subdomains after check. reduced by $((n - m)).${RESET}\n"
 }
 
 aqua(){
@@ -112,31 +115,32 @@ eyew(){
 }
 
 
-progress-bar(){
-    # nice progress bar
-    let progress="(${1}*100/${2}*100)/100"
-    let done="(${progress}*6)/10"
-    let left=60-$done
-    done=$(printf "%${done}s")
-    left=$(printf "%${left}s")
-    printf "\r${RED}::${RESET} [${done// /${RED}=}>${RESET}${left// / }] $1/$2"
-
-}
+#progress-bar(){
+#    # nice progress bar
+#    let progress="(${1}*100/${2}*100)/100"
+#    let done="(${progress}*6)/10"
+#    let left=60-$done
+#    done=$(printf "%${done}s")
+#    left=$(printf "%${left}s")
+#    printf "\r${RED}::${RESET} [${done// /${RED}=}>${RESET}${left// / }] $1/$2"
+#
+#}
 
 check-time(){
     taskname=$1
     duration=$SECONDS
-    echo "${RED}::${RESET} $taskname completed after: $(($duration/ 60)) minutes and $(($duration% 60)) seconds."
+    echo "${YELLOW}[+] $taskname completed after: $(($duration/ 60)) minutes and $(($duration% 60)) seconds.${RESET}"
 }
 
 main(){
     clear
     logo
-    echo "${RED}built with <3 by case${RESET}"
+    echo "${RED}built with <3 by @case0x00${RESET}"
+	echo -ne "\n"
 
-    echo "${RED}::${RESET} Hitting target $domain..."
+    echo "${RED}[+] hitting target $domain...${RESET}"
     if [[ -d "./$domain" ]]; then
-        echo "${RED}::${RESET} Target already known, directory already exists."
+        echo "${RED}[-] target already known, directory already exists.${RESET}"
     else
         mkdir ./$domain
     fi
@@ -148,19 +152,19 @@ main(){
     check-time "Httprobe"
 
     if [[ $screenshot == "eyewitness" ]]; then
-        echo -ne "${RED}::${RESET} Starting EyeWitness...\n"
+        echo -ne "${GREEN}[+] starting EyeWitness...${RESET}\n"
         eyew ./$domain/responsive.txt $domain
         check-time "EyeWitness"
 
     elif [[ $screenshot == "aquatone" ]]; then
-        echo -ne "${RED}::${RESET} Starting aquatone...\n"
+        echo -ne "${GREEN}[+] starting aquatone...${RESET}\n"
         aqua $domain
         check-time "Aquatone"
     else
-        echo -ne "${RED}::${RESET} Screenshot tool not specified.\n"
+        echo -ne "${RED}[!] screenshot tool not specified.${RESET}\n"
     fi
 
-    check-time "Total subdomain reconnaissance"
+    check-time "total subdomain reconnaissance"
     stty sane
     tput sgr0
 }
